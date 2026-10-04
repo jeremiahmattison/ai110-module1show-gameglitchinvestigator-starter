@@ -33,18 +33,26 @@ def check_guess(guess, secret):
     if guess == secret:
         return "Win", "🎉 Correct!"
 
+    # FIXME: Logic breaks here - "Too High"/"Too Low" outcomes paired with
+    # swapped hint messages. (Already fixed below: see FIX comment.)
+    #
+    # FIX: 
+    # "Too High" was paired with "Go HIGHER!" and "Too Low" with "Go LOWER!",
+    # telling the player the opposite of what to do. I described the
+    # symptom (100 said go higher, 0 said go lower) and the AI traced it
+    # to these swapped strings and fixed both branches below.
     try:
         if guess > secret:
-            return "Too High", "📈 Go HIGHER!"
+            return "Too High", "📉 Go LOWER!"
         else:
-            return "Too Low", "📉 Go LOWER!"
+            return "Too Low", "📈 Go HIGHER!"
     except TypeError:
         g = str(guess)
         if g == secret:
             return "Win", "🎉 Correct!"
         if g > secret:
-            return "Too High", "📈 Go HIGHER!"
-        return "Too Low", "📉 Go LOWER!"
+            return "Too High", "📉 Go LOWER!"
+        return "Too Low", "📈 Go HIGHER!"
 
 
 def update_score(current_score: int, outcome: str, attempt_number: int):
@@ -92,6 +100,9 @@ st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
 if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
 
+# FIXME: Logic breaks here - attempts starts at 1 on first load but is
+# reset to 0 by "New Game" below, so the very first game of a session
+# shows one fewer attempt remaining than it should before any guess is made.
 if "attempts" not in st.session_state:
     st.session_state.attempts = 1
 
@@ -133,7 +144,8 @@ with col3:
 
 if new_game:
     st.session_state.attempts = 0
-    st.session_state.secret = random.randint(1, 100)
+    st.session_state.secret = random.randint(low, high)
+    st.session_state.status = "playing"
     st.success("New game started.")
     st.rerun()
 
@@ -155,12 +167,7 @@ if submit:
     else:
         st.session_state.history.append(guess_int)
 
-        if st.session_state.attempts % 2 == 0:
-            secret = str(st.session_state.secret)
-        else:
-            secret = st.session_state.secret
-
-        outcome, message = check_guess(guess_int, secret)
+        outcome, message = check_guess(guess_int, st.session_state.secret)
 
         if show_hint:
             st.warning(message)

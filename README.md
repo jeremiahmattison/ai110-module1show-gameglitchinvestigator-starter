@@ -25,13 +25,23 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 📝 Document Your Experience
 
-- [ ] Describe the game's purpose.
-- [ ] Detail which bugs you found.
-- [ ] Explain what fixes you applied.
+- [x] **Describe the game's purpose.**
+  A Streamlit number-guessing game: pick a difficulty, the app secretly picks a number in that range, and you guess until you run out of attempts, getting a "Too High"/"Too Low" hint after each try.
+
+- [x] **Detail which bugs you found.**
+  - The secret number was being re-rolled on every rerun (every click/keystroke), because `random.randint(...)` wasn't guarded by `st.session_state`, so Streamlit's "rerun the whole script" behavior generated a brand-new secret constantly.
+  - The hint messages were swapped in `check_guess`: a "Too High" outcome said "Go HIGHER!" and a "Too Low" outcome said "Go LOWER!" — the exact opposite of what the player needed to do.
+  - `st.session_state.attempts` initializes to `1` on first load but resets to `0` on "New Game," so the very first game of a session shows one fewer attempt remaining than it should (marked with a `# FIXME` in `app.py`, not yet fixed).
+
+- [x] **Explain what fixes you applied.**
+  - Wrapped secret generation in `if "secret" not in st.session_state:` so it's only rolled once per game instead of on every rerun.
+  - Swapped the hint strings in `check_guess` so "Too High" returns "Go LOWER!" and "Too Low" returns "Go HIGHER!".
+  - Added pytest regression tests (`test_too_high_message_tells_player_to_go_lower`, `test_too_low_message_tells_player_to_go_higher`) in `tests/test_game_logic.py` to lock in the corrected hint pairing.
 
 ## 📸 Demo
 
 - [ ] [Insert a screenshot of your fixed, winning game here]
+![winning game](screenshot/Screenshot%202026-10-04%20185540.png)
 
 ## 🚀 Stretch Features
 
