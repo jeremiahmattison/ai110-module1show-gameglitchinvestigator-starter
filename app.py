@@ -55,6 +55,23 @@ def check_guess(guess, secret):
         return "Too Low", "📈 Go HIGHER!"
 
 
+def get_temperature_hint(guess: int, secret: int, low: int, high: int) -> str:
+    """Return a Hot/Cold style emoji hint based on how close guess is to secret."""
+    span = max(high - low, 1)
+    distance = abs(guess - secret)
+    closeness = distance / span
+
+    if closeness <= 0.03:
+        return "🔥🔥 Red Hot!"
+    if closeness <= 0.10:
+        return "🔥 Hot"
+    if closeness <= 0.25:
+        return "🌡️ Warm"
+    if closeness <= 0.50:
+        return "❄️ Cold"
+    return "🥶 Freezing"
+
+
 def update_score(current_score: int, outcome: str, attempt_number: int):
     if outcome == "Win":
         points = 100 - 10 * (attempt_number + 1)
@@ -162,15 +179,33 @@ if submit:
     ok, guess_int, err = parse_guess(raw_guess)
 
     if not ok:
-        st.session_state.history.append(raw_guess)
+        st.session_state.history.append({
+            "Attempt": st.session_state.attempts,
+            "Guess": raw_guess,
+            "Outcome": "❌ Invalid",
+            "Temperature": "-",
+        })
         st.error(err)
     else:
-        st.session_state.history.append(guess_int)
-
         outcome, message = check_guess(guess_int, st.session_state.secret)
+        temperature = get_temperature_hint(guess_int, st.session_state.secret, low, high)
+
+        st.session_state.history.append({
+            "Attempt": st.session_state.attempts,
+            "Guess": guess_int,
+            "Outcome": outcome,
+            "Temperature": temperature,
+        })
 
         if show_hint:
-            st.warning(message)
+            # Color-coded hint: red for "too high", blue for "too low",
+            # each paired with a Hot/Cold style emoji showing how close you are.
+            if outcome == "Too High":
+                st.error(f"{message}  |  {temperature}")
+            elif outcome == "Too Low":
+                st.info(f"{message}  |  {temperature}")
+            else:
+                st.success(message)
 
         st.session_state.score = update_score(
             current_score=st.session_state.score,
@@ -193,6 +228,10 @@ if submit:
                     f"The secret was {st.session_state.secret}. "
                     f"Score: {st.session_state.score}"
                 )
+
+if st.session_state.history:
+    st.subheader("📊 Game Session Summary")
+    st.table(st.session_state.history)
 
 st.divider()
 st.caption("Built by an AI that claims this code is production-ready.")

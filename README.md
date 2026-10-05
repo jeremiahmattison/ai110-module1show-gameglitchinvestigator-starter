@@ -45,4 +45,13 @@ It wrote the code, ran away, and now the game is unplayable.
 
 ## 🚀 Stretch Features
 
-- [ ] [If you choose to complete Challenge 4, insert a screenshot of your Enhanced Game UI here]
+- [x] [If you choose to complete Challenge 4, insert a screenshot of your Enhanced Game UI here] 
+![Enhanced Game UI](screenshot/Screenshot%202026-10-05%20075335.png)
+
+### UI Enhancements
+
+- **Color-coded hints.** Instead of every hint showing in the same yellow `st.warning`, the submit handler now checks `outcome` and picks a color that matches the message: `st.error` (red) for "Too High," `st.info` (blue) for "Too Low," and `st.success` (green) for "Win."
+- **Hot/Cold emoji hints.** A new `get_temperature_hint(guess, secret, low, high)` function in `app.py` measures how close a guess is to the secret as a fraction of the difficulty's range and returns a label from `🔥🔥 Red Hot!` down to `🥶 Freezing`. It's shown right next to the Too High/Too Low hint so players get a sense of distance, not just direction.
+- **Game session summary table.** `st.session_state.history` now stores a dict per attempt (`Attempt`, `Guess`, `Outcome`, `Temperature`) instead of a bare value. A new "📊 Game Session Summary" section renders this with `st.table()` so players can see their whole guessing history — including invalid entries, marked `❌ Invalid` — at a glance.
+
+These changes only touch display code in the `submit` block and add the standalone `get_temperature_hint` helper — `check_guess`, `update_score`, and `parse_guess` (the core game logic covered by the pytest suite) are untouched.
